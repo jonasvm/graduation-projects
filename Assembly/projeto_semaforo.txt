@@ -1,0 +1,117 @@
+;---------------------------------------------------------------------
+;PROJETO SEMAFORO
+;---------------------------------------------------------------------
+ORG 0000H
+LJMP INIC
+ORG 0003H
+LJMP INTE0
+ORG 0013H
+LJMP INTE1
+MOV SP,30                    ;iniciando a pilha
+;----------------------------------------------------------------
+; habilitando os bits do registrador de interrupcoes
+;----------------------------------------------------------------
+INIC: MOV IE,#85H            ;habilitando as interrupcoes int0 e int1
+MOV TCON,#00H                ;configurando registrador de interrupções
+MOV P1,#00H                  ;limpando a entrada (chava de on e led)
+OFF: MOV P2,#00H             ;Limpando a porta p2 (desligando tudo)
+JB P1.2, PADRAO              ;se a chave estiver ligada, vai para a rotina padrão
+LJMP OFF
+;----------------------------------------------------------------------
+; iniciando a rotina padrao do semaforo
+;----------------------------------------------------------------------
+PADRAO: SETB P1.1            ;Ligando a luz de on (indica que o sistema está funcionando)
+SETB P2.7                    ;ligando a luz vermelha do sinal 1
+SETB P2.2                    ;ligando a luz verde do sinal 2
+LCALL DELAY
+CLR P2.7                     ;desligando a luz vermelha do sinal 1
+SETB P2.6                    ;ligando a luz amarela do sinal 1
+CLR P2.2                     ;desligando a luz verde do sinal 2
+SETB P2.3                    ;ligando a luz amarela do sinal 2
+LCALL DELAY
+CLR P2.6                     ;desligando a luz amarela do sinal 1
+SETB P2.5                    ;ligando a luz verde do sinal 1
+CLR P2.3                     ;desligando a luz amarela do sinal 2
+SETB P2.4                    ;ligando a luz vermelha do sinal 2
+LCALL DELAY
+CLR P2.5                     ;desligando a luz verde do sinal 1
+SETB P2.6                    ;ligando a luz amarela do sinal 1
+CLR P2.4                     ;desligando a luz vermelha do sinal 2
+SETB P2.3                    ;ligando a luz amarela do sinal 2
+LCALL DELAY
+CLR P2.3                     ;desligando a luz amarela do sinal 2
+CLR P2.6                     ;desligando a luz amarela do sinal 1
+AJMP PADRAO                  ;voltando para o inicio da rotina normal
+
+;———————————————————————————————————————–
+; entrando na rotina de loop
+;———————————————————————————————————————–
+DELAY: MOV B,#08H            ;carrega o registrador B com 8
+VOLTA: LCALL DELAY250        ;chama o delay de 250ms
+DJNZ B,VOLTA                 ;decrementa o B
+RET                          ;retorna
+DELAY250: PUSH B             ;salva o B de 8 na pilha
+MOV B,#0FAH                  ;carrega B com 250ms
+VOLTA1: LCALL DELAY1MS       ;chama o delay de 1ms
+DJNZ B,VOLTA1                ;decrementa o B de 250ms
+POP B                        ;retira o B da pilha
+RET                          ;retorna
+DELAY1MS: PUSH B             ;coloca o B de 250ms na pilha
+MOV B,14H                    ;ESTE E O DELAY DE 1MS
+FIM: DJNZ B,FIM              ;decrementa o B de 1ms
+POP B
+RET
+;———————————————————————————————————————-
+;saindo da rotina de loop
+;———————————————————————————————————————-
+; iniciando a rotina de interrupcao 1
+; se sensor1 = 1 e sensor 2 = 0
+;———————————————————————————————————————
+INTE0:
+SETB P2.7                    ;ligando a luz vermelha do sinal 1
+CLR P2.6                     ;desligando a luz amarela do sinal 1
+CLR P2.5                     ;desligando a luz verde do sinal 1
+CLR P2.4                     ;desligando a luz vermelha do sinal 2
+CLR P2.3                     ;desligando a luz amarela do sinal 2
+SETB P2.2                    ;ligando a luz verde do sinal 2
+LCALL DELAY
+CLR P2.7                     ;desligando a luz vermelha do sinal 1
+SETB P2.6                    ;ligando a luz amarela do sinal 1
+SETB P2.3                    ;ligando a luz amarela do sinal 2
+CLR P2.2                     ;desligando a luz verde do sinal 2
+LCALL DELAY
+CLR P2.6                     ;desligando a luz amarela do sinal 1
+SETB P2.5                    ;ligando a luz verde do sinal 1
+SETB P2.4                    ;ligando a luz vermelha do sinal 2
+CLR P2.3                     ;desligando a luz amarela do sinal 2
+LCALL DELAY
+RET                          ;voltando para o inicio da rotina normal
+;———————————————————————————————————————
+; iniciando a rotina de interrupcao 2
+; se sensor1 = 0 e sensor 2 = 1
+;———————————————————————————————————————
+INTE1:
+CLR P2.7                     ;desligando a luz vermelha do sinal 1
+CLR P2.6                     ;desligando a luz amarela do sinal 1
+SETB P2.5                    ;ligando a luz verde do sinal 1
+SETB P2.4                    ;ligando a luz vermelha do sinal 2
+CLR P2.3                     ;desligando a luz amarela do sinal 2
+CLR P2.2                     ;desligando a luz verde do sinal 2
+LCALL DELAY
+SETB P2.6                    ;ligando a luz amarela do sinal 1
+CLR P2.5                     ;desligando a luz verde do sinal 1
+CLR P2.4                     ;desligando a luz vermelha do sinal 2
+SETB P2.3                    ;ligando a luz amarela do sinal 2
+LCALL DELAY
+CLR P2.6                     ;desligando a luz amarela do sinal 1
+SETB P2.7                    ;ligando a luz vermelha do sinal 1
+SETB P2.2                    ;ligando a luz verde do sinal 2
+CLR P2.3                     ;desligando a luz amarela do sinal 2
+LCALL DELAY
+RET                          ;voltando para o inicio da rotina normal
+
+END
+
+;———————————————————————————————————————
+; Fim do Programa
+;———————————————————————————————————————
